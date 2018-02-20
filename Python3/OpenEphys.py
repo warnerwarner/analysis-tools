@@ -63,6 +63,7 @@ def loadFolder(folderpath,**kwargs):
 
     for i, f in enumerate(filelist):
         if '.continuous' in f:
+            print(f)
             data[f.replace('.continuous','')] = loadContinuous(os.path.join(folderpath, f))
             numFiles += 1
 
