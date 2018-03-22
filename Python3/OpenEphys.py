@@ -19,6 +19,7 @@ import scipy.io
 import time
 import struct
 from copy import deepcopy
+import time
 
 # constants
 NUM_HEADER_BYTES = 1024
@@ -66,7 +67,8 @@ def loadFolder(folderpath,**kwargs):
             print(f)
             data[f.replace('.continuous','')] = loadContinuous(os.path.join(folderpath, f))
             numFiles += 1
-
+            t1 = time.time()
+            print(t1-t0)
     print(''.join(('Avg. Load Time: ', str((time.time() - t0)/numFiles),' sec')))
     print(''.join(('Total Load Time: ', str((time.time() - t0)),' sec')))
 
@@ -106,15 +108,14 @@ def loadFolderToArray(folderpath, channels = 'all', chprefix = 'CH',
 
     return data_array
 
-def loadContinuous(filepath, dtype = float):
 
+def loadContinuous(filepath, dtype = float):
     assert dtype in (float, np.int16), \
       'Invalid data type specified for loadContinous, valid types are float and np.int16'
 
     print("Loading continuous data...")
 
     ch = { }
-
     #read in the data
     f = open(filepath,'rb')
 
@@ -131,7 +132,6 @@ def loadContinuous(filepath, dtype = float):
     timestamps = np.zeros(nrec)
     recordingNumbers = np.zeros(nrec)
     indices = np.arange(0, nsamp + 1, SAMPLES_PER_RECORD, np.dtype(np.int64))
-
     header = readHeader(f)
 
     recIndices = np.arange(0, nrec)
@@ -143,19 +143,18 @@ def loadContinuous(filepath, dtype = float):
 
         #print index
 
-        if N != SAMPLES_PER_RECORD:
-            raise Exception('Found corrupted record in block ' + str(recordNumber))
+        #if N != SAMPLES_PER_RECORD:
+        #    raise Exception('Found corrupted record in block ' + str(recordNumber))
 
         recordingNumbers[recordNumber] = (np.fromfile(f,np.dtype('>u2'),1)) # big-endian 16-bit unsigned integer
-
         if dtype == float: # Convert data to float array and convert bits to voltage.
             data = np.fromfile(f,np.dtype('>i2'),N) * float(header['bitVolts']) # big-endian 16-bit signed integer, multiplied by bitVolts
         else:  # Keep data in signed 16 bit integer format.
+            print('not float')
             data = np.fromfile(f,np.dtype('>i2'),N)  # big-endian 16-bit signed integer
         samples[indices[recordNumber]:indices[recordNumber+1]] = data
 
         marker = f.read(10) # dump
-
     #print recordNumber
     #print index
 
@@ -294,7 +293,8 @@ def readHeader(f):
     return header
 
 def downsample(trace,down):
-    downsampled = scipy.signal.resample(trace,np.shape(trace)[0]/down)
+    downsampled = scipy.signal.resample(trace,int(np.shape(trace)[0]/down))
+    print('here')
     return downsampled
 
 def pack(folderpath,source='100',**kwargs):
