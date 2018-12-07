@@ -546,7 +546,7 @@ def pack_3(folderpath, maxf, minf, filename = '', channels = 'all', chprefix = '
     if session == '0': session = ''
     else: session = '_'+session
     
-    if not filename: filename = source + '_' + chprefix + 's' + session + '_bp_' + str(maxf) + '/'+ str(minf) + '.dat'
+    if not filename: filename = source + '_' + chprefix + 's' + session + '_bp_' + str(maxf) + '-'+ str(minf) + '.dat'
     print('Packing data to file: ' + filename)
     data_array.tofile(os.path.join(folderpath,filename))
 
