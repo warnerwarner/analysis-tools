@@ -193,6 +193,7 @@ def loadContinuous2(filepath, dtype = float):
         recording_bytes += binaray_read[i+10:i+12]
         data_bytes += binaray_read[i+12:i+2060]
     timestamps = np.frombuffer(time_bytes, dtype='<i8')
+    recordingNumbers = np.frombuffer(recording_bytes, dtype='>u2')
     if dtype == float:
         data = np.frombuffer(data_bytes, dtype='>i2')*float(header['bitVolts'])
     else:
