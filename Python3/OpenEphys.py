@@ -26,6 +26,7 @@ import time
 NUM_HEADER_BYTES = 1024
 SAMPLES_PER_RECORD = 1024
 BYTES_PER_SAMPLE = 2
+BYTES_PER_POINT = 2070 # number of bytes per iteration
 RECORD_SIZE = 4 + 8 + SAMPLES_PER_RECORD * BYTES_PER_SAMPLE + 10 # size of each continuous record in bytes
 RECORD_MARKER = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 255])
 
@@ -163,6 +164,44 @@ def loadContinuous(filepath, dtype = float):
     ch['data'] = samples  # OR use downsample(samples,1), to save space
     ch['recordingNumber'] = recordingNumbers
     f.close()
+    return ch
+
+def loadContinuous2(filepath, dtype = float):
+    '''
+    Alternative version to loadContinuous - much faster when using the cluster
+    '''
+    ch = {}
+    f = open(filepath, 'rb')
+
+    recordBytes = os.fstat(f.fileno()).st_size - NUM_HEADER_BYTES
+    header = {}
+    h = f.read(1024).decode().replace('\n','').replace('header.','')
+    for i,item in enumerate(h.split(';')):
+        if '=' in item:
+            header[item.split(' = ')[0]] = item.split(' = ')[1]
+
+    binaray_read = f.read() # Read the rest of the file in after taking the header out
+    f.close()
+
+    time_bytes = bytearray()
+    N_bytes = bytearray()
+    recording_bytes = bytearray()
+    data_bytes =bytearray()
+    for i in np.arange(0, recordBytes, BYTES_PER_POINT):
+        time_bytes+=binaray_read[i:i+8]
+        #N_bytes += binaray_read[i+8:i+10]
+        recording_bytes += binaray_read[i+10:i+12]
+        data_bytes += binaray_read[i+12:i+2060]
+    timestamps = np.frombuffer(time_bytes, dype='<i8')
+    if dtype == float:
+        data = np.frombuffer(data_bytes, dtype='>i2')*float(header['bitVolts'])
+    else:
+        data = np.frombuffer(data_bytes, dtype='>i2')
+
+    ch['header'] = header
+    ch['timestamps'] = timestamps
+    ch['data'] = data 
+    ch['recordingNumber'] = recordingNumbers
     return ch
 
 def loadSpikes(filepath):
