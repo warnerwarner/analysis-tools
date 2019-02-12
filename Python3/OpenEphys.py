@@ -659,8 +659,9 @@ def loadFolderToArrayFast(folderpath, channels = 'all', chprefix = 'CH',
     data_array[:,0] = channel_1_data
 
     for i, f in enumerate(filelist[1:]):
-            data_array[:, i + 1] = loadContinuous(os.path.join(folderpath, f), dtype)['data']
+            data_array[:, i + 1] = loadContinuous2(os.path.join(folderpath, f), dtype)['data']
             numFiles += 1
+            print(i+2)
 
     print(''.join(('Avg. Load Time: ', str((time.time() - t0)/numFiles),' sec')))
     print(''.join(('Total Load Time: ', str((time.time() - t0)),' sec')))
