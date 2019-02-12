@@ -590,6 +590,83 @@ def pack_3(folderpath, maxf, minf, filename = '', channels = 'all', chprefix = '
     print('Packing data to file: ' + filename)
     data_array.tofile(os.path.join(folderpath,filename))
 
+def pack_fast(folderpath, filename = '', channels = 'all', chprefix = 'CH', 
+           dref = None, session = '0', source = '100'):
+
+    '''Much faster, uses the loadContinuous2 which is a much quicker way to read continuous files
+    
+    filename: Name of the output file. By default, it follows the same layout of continuous files,
+              but without the channel number, for example, '100_CHs_3.dat' or '100_ADCs.dat'.
+    
+    channels:  List of channel numbers specifying order in which channels are packed. By default
+               all CH continous files are packed in numerical order.
+    
+    chprefix:  String name that defines if channels from headstage, auxiliary or ADC inputs
+               will be loaded.
+
+    dref:  Digital referencing - either supply a channel number or 'ave' to reference to the
+           average of packed channels.
+    
+    source: String name of the source that openephys uses as the prefix. It is usually 100,
+            if the headstage is the first source added, but can specify something different.
+    
+    '''
+    
+    data_array = loadFolderToArrayFast(folderpath, channels, chprefix, np.int16, session, source)
+    
+    if dref:
+        if dref == 'ave':
+            print('Digital referencing to average of all channels.')
+            reference = np.mean(data_array,1)
+        else:
+            print('Digital referencing to channel ' + str(dref))
+            if channels == 'all':
+                channels = _get_sorted_channels(folderpath, chprefix, session, source)
+            reference = deepcopy(data_array[:,channels.index(dref)])
+        for i in range(data_array.shape[1]):
+            data_array[:,i] = data_array[:,i] - reference
+    
+    if session == '0': session = ''
+    else: session = '_'+session
+    
+    if not filename: filename = source + '_' + chprefix + 's' + session + '.dat'
+    print('Packing data to file: ' + filename)
+    data_array.tofile(os.path.join(folderpath,filename))
+
+def loadFolderToArrayFast(folderpath, channels = 'all', chprefix = 'CH', 
+                      dtype = float, session = '0', source = '100'):
+    '''Load continuous files in specified folder to a single numpy array. By default all
+    CH continous files are loaded in numerical order, ordering can be specified with
+    optional channels argument which should be a list of channel numbers.'''
+    
+    if channels == 'all':
+        channels = _get_sorted_channels(folderpath, chprefix, session, source)
+    
+    if session == '0':
+        filelist = [source + '_'+chprefix + x + '.continuous' for x in map(str,channels)]
+    else:
+        filelist = [source + '_'+chprefix + x + '_' + session + '.continuous' for x in map(str,channels)]
+    
+    t0 = time.time()
+    numFiles = 1
+
+    channel_1_data = loadContinuous2(os.path.join(folderpath, filelist[0]), dtype)['data']
+
+    n_samples  = len(channel_1_data)
+    n_channels = len(filelist)
+
+    data_array = np.zeros([n_samples, n_channels], dtype)
+    data_array[:,0] = channel_1_data
+
+    for i, f in enumerate(filelist[1:]):
+            data_array[:, i + 1] = loadContinuous(os.path.join(folderpath, f), dtype)['data']
+            numFiles += 1
+
+    print(''.join(('Avg. Load Time: ', str((time.time() - t0)/numFiles),' sec')))
+    print(''.join(('Total Load Time: ', str((time.time() - t0)),' sec')))
+
+    return data_array
+
 def _get_sorted_channels(folderpath, chprefix='CH', session='0', source='100'):
     Files = [f for f in os.listdir(folderpath) if '.continuous' in f 
                                                and '_'+chprefix in f 
