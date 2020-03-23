@@ -7,7 +7,7 @@
 #SBATCH --ntasks=1
 #SBATCH --time=24:00:00
 #SBATCH --mem=200G
-#SBATCH --partition=gpu
+#SBATCH --partition=cpu
 
 
 python combined_recordings.py
