@@ -683,3 +683,65 @@ def _get_sorted_channels(folderpath, chprefix='CH', session='0', source='100'):
         Chs = sorted([int(f.split('_'+chprefix)[1].split('_')[0]) for f in Files])
 
     return(Chs)
+
+
+def packMultiFolderFast(folderpaths, filename = '', channels = 'all', chprefix = 'CH', 
+           dref = None, session = '0', source = '100'):
+	'''Much faster, uses the loadContinuous2 which is a much quicker way to read continuous files
+    
+    filename: Name of the output file. By default, it follows the same layout of continuous files,
+              but without the channel number, for example, '100_CHs_3.dat' or '100_ADCs.dat'.
+    
+    channels:  List of channel numbers specifying order in which channels are packed. By default
+               all CH continous files are packed in numerical order.
+    
+    chprefix:  String name that defines if channels from headstage, auxiliary or ADC inputs
+               will be loaded.
+
+    dref:  Digital referencing - either supply a channel number or 'ave' to reference to the
+           average of packed channels.
+    
+    source: String name of the source that openephys uses as the prefix. It is usually 100,
+            if the headstage is the first source added, but can specify something different.
+    
+    '''
+    
+    data_array = loadMutipleFolderToArrayFast(folderpath, channels, chprefix, np.int16, session, source)
+    
+    if dref:
+        if dref == 'ave':
+            print('Digital referencing to average of all channels.')
+            reference = np.mean(data_array,1)
+        else:
+            print('Digital referencing to channel ' + str(dref))
+            if channels == 'all':
+                channels = _get_sorted_channels(folderpath, chprefix, session, source)
+            reference = deepcopy(data_array[:,channels.index(dref)])
+        for i in range(data_array.shape[1]):
+            data_array[:,i] = data_array[:,i] - reference
+    
+    if session == '0': session = ''
+    else: session = '_'+session
+    
+    if not filename: filename = source + '_' + chprefix + 's' + session + '.dat'
+    print('Packing data to file: ' + filename)
+
+
+def loadMutipleFolderToArrayFast(folderpaths, channels = 'all', chprefix = 'CH', 
+                      dtype = float, session = '0', source = '100'):
+	'''
+	Loads and joins folders together to make one array, then packs them
+	'''
+	concat_array = loadFolderToArrayFast(folderpaths[0], channesl, chprefix, np.int16, session, source)
+	loaded_folders_num = 1
+	for folderpath in folderpaths[1:]:
+		print('Loaded %d of %d folders' % (loaded_folders_num, len(folderpaths)))
+		data_array = loadFolderToArrayFast(folderpath, channels, chprefix, np.int16, session, source)
+		concat_array = np.concatenate([concat_array, data_array], axis=0)
+	
+	print("Loaded all folders")
+
+	return concat_array
+
+
+
