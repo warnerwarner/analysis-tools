@@ -685,8 +685,7 @@ def _get_sorted_channels(folderpath, chprefix='CH', session='0', source='100'):
     return(Chs)
 
 
-def packMultiFolderFast(folderpaths, filename = '', channels = 'all', chprefix = 'CH',
-                        dref = None, session = '0', source = '100'):
+def packMultiFolderFast(folderpaths, filename='', channels='all', chprefix='CH', dref=None, session='0', source='100'):
     '''Much faster, uses the loadContinuous2 which is a much quicker way to read continuous files
 
     filename: Name of the output file. By default, it follows the same layout of continuous files,
@@ -731,16 +730,16 @@ def packMultiFolderFast(folderpaths, filename = '', channels = 'all', chprefix =
 
 def loadMutipleFolderToArrayFast(folderpaths, channels = 'all', chprefix = 'CH',
                       dtype = float, session = '0', source = '100'):
-	'''
+    '''
 	Loads and joins folders together to make one array, then packs them
 	'''
-	concat_array = loadFolderToArrayFast(folderpaths[0], channels, chprefix, np.int16, session, source)
-	loaded_folders_num = 1
-	for folderpath in folderpaths[1:]:
-		print('Loaded %d of %d folders' % (loaded_folders_num, len(folderpaths)))
-		data_array = loadFolderToArrayFast(folderpath, channels, chprefix, np.int16, session, source)
-		concat_array = np.concatenate([concat_array, data_array], axis=0)
+    concat_array = loadFolderToArrayFast(folderpaths[0], channels, chprefix, np.int16, session, source)
+    loaded_folders_num = 1
+    for folderpath in folderpaths[1:]:
+    	print('Loaded %d of %d folders' % (loaded_folders_num, len(folderpaths)))
+    	data_array = loadFolderToArrayFast(folderpath, channels, chprefix, np.int16, session, source)
+    	concat_array = np.concatenate([concat_array, data_array], axis=0)
 
-	print("Loaded all folders")
+    print("Loaded all folders")
 
-	return concat_array
+    return concat_array
