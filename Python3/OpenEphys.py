@@ -725,6 +725,8 @@ def packMultiFolderFast(folderpaths, filename = '', channels = 'all', chprefix =
     
     if not filename: filename = source + '_' + chprefix + 's' + session + '.dat'
     print('Packing data to file: ' + filename)
+    data_array.tofile(os.path.join(folderpaths[-1],filename))
+
 
 
 def loadMutipleFolderToArrayFast(folderpaths, channels = 'all', chprefix = 'CH', 
