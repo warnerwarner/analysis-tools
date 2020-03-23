@@ -1,3 +1,5 @@
+import sys
+sys.path.append('/home/camp/warnert/analysis-tools/Python3')
 import openephys as oe
 
 
