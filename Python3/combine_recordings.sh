@@ -10,4 +10,4 @@
 #SBATCH --partition=cpu
 
 
-python combined_recordings.py
+python combine_recordings.py
